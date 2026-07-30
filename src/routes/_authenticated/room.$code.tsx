@@ -362,7 +362,7 @@ function RoomPage() {
               </TabsList>
 
               <TabsContent value="chat" className="flex min-h-0 flex-1 flex-col">
-                <ScrollArea className="flex-1 px-4" viewportRef={scrollRef}>
+                <div ref={scrollRef} className="flex-1 overflow-y-auto px-4">
                   <div className="space-y-3 pb-4">
                     {messages.map((message) => (
                       <div key={message.id} className="text-sm">
