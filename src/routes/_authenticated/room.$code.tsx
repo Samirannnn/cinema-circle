@@ -376,7 +376,7 @@ function RoomPage() {
                       </p>
                     )}
                   </div>
-                </ScrollArea>
+                </div>
                 <form onSubmit={sendMessage} className="flex gap-2 border-t border-border/70 p-3">
                   <Input
                     value={draft}
