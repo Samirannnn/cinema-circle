@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Clapperboard, LogOut, User as UserIcon } from "lucide-react";
+import { Clapperboard, LogOut, User as UserIcon, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,6 +40,10 @@ export function AppHeader() {
               <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                 <Link to="/rooms">Rooms</Link>
               </Button>
+              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Link to="/friends">Friends</Link>
+              </Button>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="rounded-full outline-hidden ring-ring focus-visible:ring-2">
@@ -56,9 +60,15 @@ export function AppHeader() {
                     <Link to="/rooms">Watch rooms</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/friends">
+                      <Users className="mr-2 size-4" /> Friends
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/profile">
                       <UserIcon className="mr-2 size-4" /> Profile
                     </Link>
+
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => void signOut()}>
                     <LogOut className="mr-2 size-4" /> Sign out

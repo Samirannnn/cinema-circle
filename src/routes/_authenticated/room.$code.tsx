@@ -24,6 +24,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppHeader } from "@/components/app-header";
 import { VideoPlayer } from "@/components/video-player";
 import { VideoGrid } from "@/components/video-grid";
+import { InviteFriendsDialog } from "@/components/invite-friends-dialog";
+
 import { useSession } from "@/hooks/use-session";
 import { useWebRTC } from "@/hooks/use-webrtc";
 import {
@@ -271,18 +273,21 @@ function RoomPage() {
           </Button>
           <h1 className="text-3xl">{room.name}</h1>
           {isHost && <Badge>Host</Badge>}
-          <Button
-            variant="outline"
-            size="sm"
-            className="ml-auto"
-            onClick={() => {
-              void navigator.clipboard.writeText(`${window.location.origin}/room/${room.code}`);
-              toast.success("Invite link copied");
-            }}
-          >
-            <Copy className="mr-2 size-4" />
-            <span className="font-mono tracking-widest">{room.code}</span>
-          </Button>
+          <div className="ml-auto flex items-center gap-2">
+            <InviteFriendsDialog roomId={room.id} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void navigator.clipboard.writeText(`${window.location.origin}/room/${room.code}`);
+                toast.success("Invite link copied");
+              }}
+            >
+              <Copy className="mr-2 size-4" />
+              <span className="font-mono tracking-widest">{room.code}</span>
+            </Button>
+          </div>
+
         </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">

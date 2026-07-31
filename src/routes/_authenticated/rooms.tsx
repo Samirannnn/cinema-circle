@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/dialog";
 import { useSession } from "@/hooks/use-session";
 import { createRoom, fetchRoomByCode, joinRoomByCode, listPublicRooms } from "@/lib/rooms";
+import { listIncomingRoomInvites, respondToRoomInvite } from "@/lib/friends";
+
 
 export const Route = createFileRoute("/_authenticated/rooms")({
   head: () => ({
@@ -84,7 +86,29 @@ function RoomsPage() {
     onError: (e: Error) => toast.error(e.message === "Room not found" ? "No room with that code" : e.message),
   });
 
+  const invitesQuery = useQuery({
+    queryKey: ["room-invites", user?.id],
+    queryFn: () => listIncomingRoomInvites(user!.id),
+    enabled: Boolean(user?.id),
+  });
+
+  const respondInvite = useMutation({
+    mutationFn: async (v: { id: string; status: "accepted" | "declined"; code: string | null }) => {
+      await respondToRoomInvite(v.id, v.status);
+      return v;
+    },
+    onSuccess: (v) => {
+      queryClient.invalidateQueries({ queryKey: ["room-invites", user?.id] });
+      if (v.status === "accepted" && v.code) {
+        navigate({ to: "/room/$code", params: { code: v.code } });
+      }
+    },
+    onError: () => toast.error("Couldn't update that invite"),
+  });
+
+  const invites = useMemo(() => invitesQuery.data ?? [], [invitesQuery.data]);
   const rooms = useMemo(() => roomsQuery.data ?? [], [roomsQuery.data]);
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -197,8 +221,55 @@ function RoomsPage() {
           </Button>
         </form>
 
+        {invites.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-3xl">Invites from friends</h2>
+            <ul className="mt-4 space-y-2">
+              {invites.map((invite) => (
+                <li
+                  key={invite.id}
+                  className="surface-panel flex flex-wrap items-center gap-3 rounded-xl p-4"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-xl">{invite.rooms?.name ?? "A watch room"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {invite.rooms?.movie_title || "No movie set yet"}
+                    </p>
+                  </div>
+                  <div className="ml-auto flex gap-2">
+                    <Button
+                      size="sm"
+                      disabled={respondInvite.isPending}
+                      onClick={() =>
+                        respondInvite.mutate({
+                          id: invite.id,
+                          status: "accepted",
+                          code: invite.rooms?.code ?? null,
+                        })
+                      }
+                    >
+                      Join
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={respondInvite.isPending}
+                      onClick={() =>
+                        respondInvite.mutate({ id: invite.id, status: "declined", code: null })
+                      }
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section className="mt-10">
           <h2 className="text-3xl">Now screening</h2>
+
           {roomsQuery.isLoading ? (
             <div className="mt-6 flex justify-center py-16">
               <Loader2 className="size-6 animate-spin text-primary" />
