@@ -24,6 +24,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppHeader } from "@/components/app-header";
 import { VideoPlayer } from "@/components/video-player";
 import { VideoGrid } from "@/components/video-grid";
+import { InviteFriendsDialog } from "@/components/invite-friends-dialog";
+
 import { useSession } from "@/hooks/use-session";
 import { useWebRTC } from "@/hooks/use-webrtc";
 import {
