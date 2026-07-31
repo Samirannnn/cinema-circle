@@ -40,6 +40,10 @@ export function AppHeader() {
               <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                 <Link to="/rooms">Rooms</Link>
               </Button>
+              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Link to="/friends">Friends</Link>
+              </Button>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="rounded-full outline-hidden ring-ring focus-visible:ring-2">
