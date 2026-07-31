@@ -197,8 +197,55 @@ function RoomsPage() {
           </Button>
         </form>
 
+        {invites.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-3xl">Invites from friends</h2>
+            <ul className="mt-4 space-y-2">
+              {invites.map((invite) => (
+                <li
+                  key={invite.id}
+                  className="surface-panel flex flex-wrap items-center gap-3 rounded-xl p-4"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-xl">{invite.rooms?.name ?? "A watch room"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {invite.rooms?.movie_title || "No movie set yet"}
+                    </p>
+                  </div>
+                  <div className="ml-auto flex gap-2">
+                    <Button
+                      size="sm"
+                      disabled={respondInvite.isPending}
+                      onClick={() =>
+                        respondInvite.mutate({
+                          id: invite.id,
+                          status: "accepted",
+                          code: invite.rooms?.code ?? null,
+                        })
+                      }
+                    >
+                      Join
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={respondInvite.isPending}
+                      onClick={() =>
+                        respondInvite.mutate({ id: invite.id, status: "declined", code: null })
+                      }
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section className="mt-10">
           <h2 className="text-3xl">Now screening</h2>
+
           {roomsQuery.isLoading ? (
             <div className="mt-6 flex justify-center py-16">
               <Loader2 className="size-6 animate-spin text-primary" />
