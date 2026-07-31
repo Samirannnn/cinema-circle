@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/dialog";
 import { useSession } from "@/hooks/use-session";
 import { createRoom, fetchRoomByCode, joinRoomByCode, listPublicRooms } from "@/lib/rooms";
+import { listIncomingRoomInvites, respondToRoomInvite } from "@/lib/friends";
+
 
 export const Route = createFileRoute("/_authenticated/rooms")({
   head: () => ({
