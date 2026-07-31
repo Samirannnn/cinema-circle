@@ -60,9 +60,15 @@ export function AppHeader() {
                     <Link to="/rooms">Watch rooms</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/friends">
+                      <Users className="mr-2 size-4" /> Friends
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/profile">
                       <UserIcon className="mr-2 size-4" /> Profile
                     </Link>
+
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => void signOut()}>
                     <LogOut className="mr-2 size-4" /> Sign out
