@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: Database["public"]["Enums"]["friendship_status"]
+          updated_at: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           body: string
@@ -75,6 +102,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      room_invites: {
+        Row: {
+          created_at: string
+          id: string
+          invitee_id: string
+          inviter_id: string
+          room_id: string
+          status: Database["public"]["Enums"]["friendship_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invitee_id: string
+          inviter_id: string
+          room_id: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invitee_id?: string
+          inviter_id?: string
+          room_id?: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_invites_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       room_members: {
         Row: {
@@ -170,6 +235,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      are_friends: { Args: { _a: string; _b: string }; Returns: boolean }
       is_room_host: {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
@@ -181,7 +247,7 @@ export type Database = {
       join_room_by_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      friendship_status: "pending" | "accepted" | "declined"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -308,6 +374,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      friendship_status: ["pending", "accepted", "declined"],
+    },
   },
 } as const
