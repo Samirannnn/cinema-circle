@@ -84,7 +84,29 @@ function RoomsPage() {
     onError: (e: Error) => toast.error(e.message === "Room not found" ? "No room with that code" : e.message),
   });
 
+  const invitesQuery = useQuery({
+    queryKey: ["room-invites", user?.id],
+    queryFn: () => listIncomingRoomInvites(user!.id),
+    enabled: Boolean(user?.id),
+  });
+
+  const respondInvite = useMutation({
+    mutationFn: async (v: { id: string; status: "accepted" | "declined"; code: string | null }) => {
+      await respondToRoomInvite(v.id, v.status);
+      return v;
+    },
+    onSuccess: (v) => {
+      queryClient.invalidateQueries({ queryKey: ["room-invites", user?.id] });
+      if (v.status === "accepted" && v.code) {
+        navigate({ to: "/room/$code", params: { code: v.code } });
+      }
+    },
+    onError: () => toast.error("Couldn't update that invite"),
+  });
+
+  const invites = useMemo(() => invitesQuery.data ?? [], [invitesQuery.data]);
   const rooms = useMemo(() => roomsQuery.data ?? [], [roomsQuery.data]);
+
 
   return (
     <div className="min-h-screen bg-background">
