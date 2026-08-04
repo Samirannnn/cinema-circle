@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Copy,
   Hand,
+  Link2 as LinkIcon,
   Loader2,
   Mic,
   MicOff,
@@ -25,6 +26,7 @@ import { AppHeader } from "@/components/app-header";
 import { VideoPlayer } from "@/components/video-player";
 import { VideoGrid } from "@/components/video-grid";
 import { InviteFriendsDialog } from "@/components/invite-friends-dialog";
+import { InviteMessageCard } from "@/components/invite-message-card";
 
 import { useSession } from "@/hooks/use-session";
 import { useWebRTC } from "@/hooks/use-webrtc";
@@ -32,10 +34,13 @@ import {
   fetchProfilesByIds,
   fetchRoomByCode,
   joinRoomByCode,
+  parseInviteBody,
+  postInviteMessage,
   resolveMovieUrl,
   type Message,
   type Room,
 } from "@/lib/rooms";
+
 
 export const Route = createFileRoute("/_authenticated/room/$code")({
   head: () => ({
@@ -190,6 +195,18 @@ function RoomPage() {
     if (error) toast.error("Message failed to send");
   }
 
+  async function shareInviteLink() {
+    if (!room || !user) return;
+    const note = draft.trim().slice(0, 200);
+    setDraft("");
+    try {
+      await postInviteMessage({ roomId: room.id, userId: user.id, code: room.code, note: note || undefined });
+    } catch {
+      toast.error("Couldn't share the invite link");
+    }
+  }
+
+
   async function pushPlayback(next: { isPlaying: boolean; positionSeconds: number }) {
     if (!room || !isHost) return;
     setRoom({ ...room, is_playing: next.isPlaying, position_seconds: next.positionSeconds });
@@ -274,7 +291,7 @@ function RoomPage() {
           <h1 className="text-3xl">{room.name}</h1>
           {isHost && <Badge>Host</Badge>}
           <div className="ml-auto flex items-center gap-2">
-            <InviteFriendsDialog roomId={room.id} />
+            <InviteFriendsDialog roomId={room.id} roomCode={room.code} />
             <Button
               variant="outline"
               size="sm"
@@ -368,12 +385,24 @@ function RoomPage() {
               <TabsContent value="chat" className="flex min-h-0 flex-1 flex-col">
                 <div ref={scrollRef} className="flex-1 overflow-y-auto px-4">
                   <div className="space-y-3 pb-4">
-                    {messages.map((message) => (
-                      <div key={message.id} className="text-sm">
-                        <span className="font-semibold text-accent">{nameFor(message.user_id)}</span>{" "}
-                        <span className="text-muted-foreground">{message.body}</span>
-                      </div>
-                    ))}
+                    {messages.map((message) => {
+                      const invite = message.kind === "invite" ? parseInviteBody(message.body) : null;
+                      if (invite) {
+                        return (
+                          <InviteMessageCard
+                            key={message.id}
+                            invite={invite}
+                            senderName={nameFor(message.user_id)}
+                          />
+                        );
+                      }
+                      return (
+                        <div key={message.id} className="text-sm">
+                          <span className="font-semibold text-accent">{nameFor(message.user_id)}</span>{" "}
+                          <span className="text-muted-foreground">{message.body}</span>
+                        </div>
+                      );
+                    })}
                     {messages.length === 0 && (
                       <p className="pt-6 text-center text-sm text-muted-foreground">
                         Say something to start the conversation.
@@ -382,6 +411,16 @@ function RoomPage() {
                   </div>
                 </div>
                 <form onSubmit={sendMessage} className="flex gap-2 border-t border-border/70 p-3">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    aria-label="Share invite link in chat"
+                    title="Share invite link in chat"
+                    onClick={() => void shareInviteLink()}
+                  >
+                    <LinkIcon className="size-4" />
+                  </Button>
                   <Input
                     value={draft}
                     maxLength={1000}
@@ -393,6 +432,7 @@ function RoomPage() {
                   </Button>
                 </form>
               </TabsContent>
+
 
               <TabsContent value="people" className="min-h-0 flex-1 overflow-hidden px-4 pb-4">
                 <VideoGrid localStream={rtc.localStream} peers={rtc.peers} nameFor={nameFor} />

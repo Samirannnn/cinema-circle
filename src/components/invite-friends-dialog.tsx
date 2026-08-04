@@ -15,9 +15,10 @@ import {
 } from "@/components/ui/dialog";
 import { useSession } from "@/hooks/use-session";
 import { inviteFriendToRoom, listFriendProfiles, listRoomInviteeIds } from "@/lib/friends";
+import { postInviteMessage } from "@/lib/rooms";
 
-/** Invite accepted friends straight into a room. */
-export function InviteFriendsDialog({ roomId }: { roomId: string }) {
+/** Invite accepted friends straight into a room, and drop the link into chat. */
+export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; roomCode?: string }) {
   const { user } = useSession();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -36,13 +37,24 @@ export function InviteFriendsDialog({ roomId }: { roomId: string }) {
   });
 
   const invite = useMutation({
-    mutationFn: (friendId: string) => inviteFriendToRoom(roomId, user!.id, friendId),
+    mutationFn: async (friend: { id: string; display_name: string }) => {
+      await inviteFriendToRoom(roomId, user!.id, friend.id);
+      if (roomCode) {
+        await postInviteMessage({
+          roomId,
+          userId: user!.id,
+          code: roomCode,
+          note: `Invited ${friend.display_name} — tap to join.`,
+        });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["room-invitees", roomId] });
-      toast.success("Invite sent");
+      toast.success("Invite sent and shared in chat");
     },
     onError: () => toast.error("Couldn't send that invite"),
   });
+
 
   const friends = useMemo(() => {
     const all = friendsQuery.data ?? [];
@@ -94,7 +106,7 @@ export function InviteFriendsDialog({ roomId }: { roomId: string }) {
                   variant={invited.has(friend.id) ? "secondary" : "default"}
                   className="ml-auto"
                   disabled={invite.isPending}
-                  onClick={() => invite.mutate(friend.id)}
+                  onClick={() => invite.mutate(friend)}
                 >
                   {invited.has(friend.id) ? "Invite again" : "Invite"}
                 </Button>
