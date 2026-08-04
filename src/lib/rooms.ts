@@ -79,6 +79,42 @@ export async function fetchProfilesByIds(ids: string[]) {
   return data;
 }
 
+/** Builds the shareable join link for a room code. */
+export function roomInviteLink(code: string) {
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  return `${origin}/room/${code.toUpperCase()}`;
+}
+
+/** Posts an invite link into the room chat so anyone reading can join in one click. */
+export async function postInviteMessage(input: {
+  roomId: string;
+  userId: string;
+  code: string;
+  note?: string;
+}) {
+  const body = JSON.stringify({
+    code: input.code.toUpperCase(),
+    url: roomInviteLink(input.code),
+    note: input.note ?? null,
+  });
+  const { error } = await supabase
+    .from("messages")
+    .insert({ room_id: input.roomId, user_id: input.userId, body, kind: "invite" });
+  if (error) throw error;
+}
+
+export type InvitePayload = { code: string; url: string; note: string | null };
+
+export function parseInviteBody(body: string): InvitePayload | null {
+  try {
+    const parsed = JSON.parse(body) as Partial<InvitePayload>;
+    if (!parsed?.code || !parsed?.url) return null;
+    return { code: parsed.code, url: parsed.url, note: parsed.note ?? null };
+  } catch {
+    return null;
+  }
+}
+
 /** Uploaded movies live in a private bucket; playback needs a signed URL. */
 export async function resolveMovieUrl(movieUrl: string | null) {
   if (!movieUrl) return null;
