@@ -91,11 +91,15 @@ export async function postInviteMessage(input: {
   userId: string;
   code: string;
   note?: string;
+  inviteeId?: string;
+  inviteeName?: string;
 }) {
   const body = JSON.stringify({
     code: input.code.toUpperCase(),
     url: roomInviteLink(input.code),
     note: input.note ?? null,
+    inviteeId: input.inviteeId ?? null,
+    inviteeName: input.inviteeName ?? null,
   });
   const { error } = await supabase
     .from("messages")
@@ -103,13 +107,25 @@ export async function postInviteMessage(input: {
   if (error) throw error;
 }
 
-export type InvitePayload = { code: string; url: string; note: string | null };
+export type InvitePayload = {
+  code: string;
+  url: string;
+  note: string | null;
+  inviteeId: string | null;
+  inviteeName: string | null;
+};
 
 export function parseInviteBody(body: string): InvitePayload | null {
   try {
     const parsed = JSON.parse(body) as Partial<InvitePayload>;
     if (!parsed?.code || !parsed?.url) return null;
-    return { code: parsed.code, url: parsed.url, note: parsed.note ?? null };
+    return {
+      code: parsed.code,
+      url: parsed.url,
+      note: parsed.note ?? null,
+      inviteeId: parsed.inviteeId ?? null,
+      inviteeName: parsed.inviteeName ?? null,
+    };
   } catch {
     return null;
   }

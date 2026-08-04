@@ -97,6 +97,18 @@ export async function respondToRoomInvite(id: string, status: "accepted" | "decl
   if (error) throw error;
 }
 
+/** The room invite addressed to a specific user, if any (RSVP state for chat cards). */
+export async function getRoomInvite(roomId: string, inviteeId: string) {
+  const { data, error } = await supabase
+    .from("room_invites")
+    .select("*")
+    .eq("room_id", roomId)
+    .eq("invitee_id", inviteeId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 /** Invitee ids already invited to a room (any status). */
 export async function listRoomInviteeIds(roomId: string) {
   const { data, error } = await supabase.from("room_invites").select("invitee_id").eq("room_id", roomId);
