@@ -195,6 +195,18 @@ function RoomPage() {
     if (error) toast.error("Message failed to send");
   }
 
+  async function shareInviteLink() {
+    if (!room || !user) return;
+    const note = draft.trim().slice(0, 200);
+    setDraft("");
+    try {
+      await postInviteMessage({ roomId: room.id, userId: user.id, code: room.code, note: note || undefined });
+    } catch {
+      toast.error("Couldn't share the invite link");
+    }
+  }
+
+
   async function pushPlayback(next: { isPlaying: boolean; positionSeconds: number }) {
     if (!room || !isHost) return;
     setRoom({ ...room, is_playing: next.isPlaying, position_seconds: next.positionSeconds });
