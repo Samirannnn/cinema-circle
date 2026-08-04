@@ -393,6 +393,8 @@ function RoomPage() {
                             key={message.id}
                             invite={invite}
                             senderName={nameFor(message.user_id)}
+                            roomId={room.id}
+                            currentUserId={user?.id}
                           />
                         );
                       }
