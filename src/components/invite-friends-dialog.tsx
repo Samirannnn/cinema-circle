@@ -45,6 +45,8 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
           userId: user!.id,
           code: roomCode,
           note: `Invited ${friend.display_name} — tap to join.`,
+          inviteeId: friend.id,
+          inviteeName: friend.display_name,
         });
       }
     },
