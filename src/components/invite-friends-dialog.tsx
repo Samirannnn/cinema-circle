@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { useSession } from "@/hooks/use-session";
 import { inviteFriendToRoom, listFriendProfiles, listRoomInviteeIds } from "@/lib/friends";
+import { postInviteMessage } from "@/lib/rooms";
 
 /** Invite accepted friends straight into a room, and drop the link into chat. */
 export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; roomCode?: string }) {
@@ -105,7 +106,7 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
                   variant={invited.has(friend.id) ? "secondary" : "default"}
                   className="ml-auto"
                   disabled={invite.isPending}
-                  onClick={() => invite.mutate(friend.id)}
+                  onClick={() => invite.mutate(friend)}
                 >
                   {invited.has(friend.id) ? "Invite again" : "Invite"}
                 </Button>
