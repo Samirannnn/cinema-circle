@@ -291,7 +291,7 @@ function RoomPage() {
           <h1 className="text-3xl">{room.name}</h1>
           {isHost && <Badge>Host</Badge>}
           <div className="ml-auto flex items-center gap-2">
-            <InviteFriendsDialog roomId={room.id} />
+            <InviteFriendsDialog roomId={room.id} roomCode={room.code} />
             <Button
               variant="outline"
               size="sm"
