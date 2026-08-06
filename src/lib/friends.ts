@@ -109,9 +109,25 @@ export async function getRoomInvite(roomId: string, inviteeId: string) {
   return data;
 }
 
-/** Invitee ids already invited to a room (any status). */
-export async function listRoomInviteeIds(roomId: string) {
-  const { data, error } = await supabase.from("room_invites").select("invitee_id").eq("room_id", roomId);
+/** Invitee ids already invited to a room, with their RSVP status. */
+export async function listRoomInviteStatuses(roomId: string) {
+  const { data, error } = await supabase
+    .from("room_invites")
+    .select("invitee_id, status")
+    .eq("room_id", roomId);
   if (error) throw error;
-  return (data ?? []).map((r) => r.invitee_id);
+  return data ?? [];
 }
+
+/** Removes prior invite cards for this invitee so the fresh RSVP card replaces them. */
+export async function clearInviteMessages(roomId: string, inviterId: string, inviteeId: string) {
+  const { error } = await supabase
+    .from("messages")
+    .delete()
+    .eq("room_id", roomId)
+    .eq("user_id", inviterId)
+    .eq("kind", "invite")
+    .like("body", `%"inviteeId":"${inviteeId}"%`);
+  if (error) throw error;
+}
+
