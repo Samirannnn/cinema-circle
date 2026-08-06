@@ -68,12 +68,33 @@ function AuthPage() {
         data: { display_name: displayName.trim() || parsed.data.email.split("@")[0] },
       },
     });
-    setLoading(false);
-    if (error) return toast.error(error.message);
+
+    if (error) {
+      // Attempt direct sign-in in case the user account was already created in a prior attempt
+      const signInRes = await supabase.auth.signInWithPassword(parsed.data);
+      setLoading(false);
+      if (!signInRes.error && signInRes.data.session) {
+        toast.success("Signed in successfully!");
+        return navigate({ to: "/rooms" });
+      }
+
+      if (error.status === 429 || error.message?.toLowerCase().includes("rate limit") || error.message?.toLowerCase().includes("too many requests")) {
+        return toast.error("Supabase Email Rate Limit (429). Please disable 'Confirm email' in your Supabase Auth dashboard.");
+      }
+      return toast.error(error.message);
+    }
+
     if (!data.session) {
+      // Try signing in immediately if email confirmation is off or auto-login is possible
+      const signInRes = await supabase.auth.signInWithPassword(parsed.data);
+      setLoading(false);
+      if (!signInRes.error && signInRes.data.session) {
+        return navigate({ to: "/rooms" });
+      }
       setAwaitingConfirm(true);
       return;
     }
+    setLoading(false);
     navigate({ to: "/rooms" });
   }
 

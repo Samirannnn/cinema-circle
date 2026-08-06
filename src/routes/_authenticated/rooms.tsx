@@ -22,7 +22,9 @@ import {
 import { useSession } from "@/hooks/use-session";
 import { createRoom, fetchRoomByCode, joinRoomByCode, listPublicRooms } from "@/lib/rooms";
 import { listIncomingRoomInvites, respondToRoomInvite } from "@/lib/friends";
-
+import { WatchHistorySection } from "@/components/watch-history-section";
+import { FavoritesSection } from "@/components/favorites-section";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export const Route = createFileRoute("/_authenticated/rooms")({
   head: () => ({
@@ -33,8 +35,16 @@ export const Route = createFileRoute("/_authenticated/rooms")({
       { property: "og:description", content: "Browse public watch rooms or host your own synchronized screening." },
     ],
   }),
-  component: RoomsPage,
+  component: RoomsPageWrapper,
 });
+
+function RoomsPageWrapper() {
+  return (
+    <ErrorBoundary fallbackMessage="Failed to load rooms page.">
+      <RoomsPage />
+    </ErrorBoundary>
+  );
+}
 
 function RoomsPage() {
   const { user } = useSession();
@@ -108,7 +118,6 @@ function RoomsPage() {
 
   const invites = useMemo(() => invitesQuery.data ?? [], [invitesQuery.data]);
   const rooms = useMemo(() => roomsQuery.data ?? [], [roomsQuery.data]);
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -266,6 +275,10 @@ function RoomsPage() {
             </ul>
           </section>
         )}
+
+        <WatchHistorySection />
+
+        <FavoritesSection />
 
         <section className="mt-10">
           <h2 className="text-3xl">Now screening</h2>
