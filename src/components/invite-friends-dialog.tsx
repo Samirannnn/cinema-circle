@@ -14,7 +14,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useSession } from "@/hooks/use-session";
-import { inviteFriendToRoom, listFriendProfiles, listRoomInviteeIds } from "@/lib/friends";
+import {
+  clearInviteMessages,
+  inviteFriendToRoom,
+  listFriendProfiles,
+  listRoomInviteStatuses,
+} from "@/lib/friends";
 import { postInviteMessage } from "@/lib/rooms";
 
 /** Invite accepted friends straight into a room, and drop the link into chat. */
