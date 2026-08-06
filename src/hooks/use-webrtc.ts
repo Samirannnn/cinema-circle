@@ -38,6 +38,7 @@ export function useWebRTC(roomId: string | undefined, userId: string | undefined
   const [mediaError, setMediaError] = useState<string | null>(null);
 
   const pcs = useRef(new Map<string, RTCPeerConnection>());
+  const candidateQueues = useRef(new Map<string, RTCIceCandidateInit[]>());
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const localRef = useRef<MediaStream | null>(null);
   const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
@@ -77,10 +78,12 @@ export function useWebRTC(roomId: string | undefined, userId: string | undefined
 
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === "failed") {
+          console.warn(`[WebRTC] Peer connection to ${peerId} failed, restarting ICE...`);
           pc.restartIce();
         }
         if (pc.connectionState === "closed") {
           pcs.current.delete(peerId);
+          candidateQueues.current.delete(peerId);
           setPeers((prev) => prev.filter((p) => p.userId !== peerId));
         }
       };
@@ -90,6 +93,20 @@ export function useWebRTC(roomId: string | undefined, userId: string | undefined
     },
     [updatePeerStream, userId],
   );
+
+  const drainCandidateQueue = async (peerId: string, pc: RTCPeerConnection) => {
+    const queue = candidateQueues.current.get(peerId) ?? [];
+    while (queue.length > 0) {
+      const candidate = queue.shift();
+      if (candidate) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+          console.warn("[WebRTC] Error adding queued ICE candidate:", err);
+        }
+      }
+    }
+  };
 
   const callPeer = useCallback(
     async (peerId: string) => {
@@ -128,6 +145,7 @@ export function useWebRTC(roomId: string | undefined, userId: string | undefined
         if (!others.includes(peerId)) {
           pc.close();
           pcs.current.delete(peerId);
+          candidateQueues.current.delete(peerId);
           setPeers((prev) => prev.filter((p) => p.userId !== peerId));
         }
       });
@@ -140,6 +158,8 @@ export function useWebRTC(roomId: string | undefined, userId: string | undefined
 
       if (msg.description) {
         await pc.setRemoteDescription(new RTCSessionDescription(msg.description));
+        await drainCandidateQueue(msg.from, pc);
+
         if (msg.description.type === "offer") {
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
@@ -150,10 +170,16 @@ export function useWebRTC(roomId: string | undefined, userId: string | undefined
           });
         }
       } else if (msg.candidate) {
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
-        } catch {
-          /* candidate arrived before remote description; safe to ignore */
+        if (pc.remoteDescription && pc.remoteDescription.type) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+          } catch {
+            /* candidate arrived slightly out of order */
+          }
+        } else {
+          const queue = candidateQueues.current.get(msg.from) ?? [];
+          queue.push(msg.candidate);
+          candidateQueues.current.set(msg.from, queue);
         }
       }
     });

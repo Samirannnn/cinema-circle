@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Lock, Shield, UserMinus, UserCheck, Key, Settings } from "lucide-react";
+import { Lock, Shield, UserMinus, UserCheck, Key, Settings, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { Room } from "@/lib/rooms";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { deleteRoom, type Room } from "@/lib/rooms";
 
 type Props = {
   room: Room;
@@ -24,9 +36,11 @@ type Props = {
 };
 
 export function RoomSettingsDialog({ room, isHost, memberIds, nameFor, onRoomUpdated }: Props) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(room.is_locked ?? false);
   const [password, setPassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   if (!isHost) return null;
 
@@ -78,6 +92,20 @@ export function RoomSettingsDialog({ room, isHost, memberIds, nameFor, onRoomUpd
     onRoomUpdated({ host_id: newHostId });
     toast.success(`Host transferred to ${nameFor(newHostId)}`);
     setOpen(false);
+  }
+
+  async function handleDeleteRoom() {
+    setDeleting(true);
+    try {
+      await deleteRoom(room.id, room.host_id);
+      toast.success("Room permanently deleted");
+      setOpen(false);
+      navigate({ to: "/rooms", replace: true });
+    } catch {
+      toast.error("Failed to delete room");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -158,6 +186,32 @@ export function RoomSettingsDialog({ room, isHost, memberIds, nameFor, onRoomUpd
                 <p className="text-center text-xs text-muted-foreground">No other participants in the room</p>
               )}
             </div>
+          </div>
+
+          {/* Delete Room Section */}
+          <div className="border-t border-border/70 pt-4 space-y-2">
+            <Label className="text-sm font-semibold text-destructive">Danger Zone</Label>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="w-full" disabled={deleting}>
+                  <Trash2 className="mr-2 size-4" /> Permanently Delete Room
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. Permanently delete room <strong>"{room.name}"</strong> and all its chat messages & members?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => void handleDeleteRoom()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete Room
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </DialogContent>

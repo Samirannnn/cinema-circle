@@ -69,6 +69,15 @@ export async function fetchRoomByCode(code: string) {
   return data;
 }
 
+export async function deleteRoom(roomId: string, hostId: string) {
+  const { error } = await supabase
+    .from("rooms")
+    .delete()
+    .eq("id", roomId)
+    .eq("host_id", hostId);
+  if (error) throw error;
+}
+
 export async function fetchProfilesByIds(ids: string[]) {
   if (ids.length === 0) return [];
   const { data, error } = await supabase

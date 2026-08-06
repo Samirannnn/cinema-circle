@@ -88,7 +88,9 @@ export function VideoPlayer({
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
-        backBufferLength: 90,
+        maxBufferLength: 30,
+        maxMaxBufferLength: 300,
+        highBufferWatchdogPeriod: 2,
       });
       hlsRef.current = hls;
 
@@ -143,15 +145,16 @@ export function VideoPlayer({
     };
   }, [src]);
 
-  // Sync with host authoritative state
+  // Sync with host authoritative state (high accuracy: 0.5s threshold)
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !ready) return;
 
     const elapsed = isPlaying ? (Date.now() - new Date(lastSyncAt).getTime()) / 1000 : 0;
     const target = positionSeconds + Math.max(0, elapsed);
+    const diff = Math.abs(video.currentTime - target);
 
-    if (Math.abs(video.currentTime - target) > 1.2) {
+    if (diff > 0.5) {
       video.currentTime = target;
     }
     if (isPlaying && video.paused) void video.play().catch(() => undefined);

@@ -51,7 +51,12 @@ function AuthPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if (error.message?.toLowerCase().includes("invalid login credentials")) {
+        return toast.error("Invalid email/password, or account doesn't exist yet on this database. Switch to 'Create account' to register!");
+      }
+      return toast.error(error.message);
+    }
     navigate({ to: "/rooms" });
   }
 

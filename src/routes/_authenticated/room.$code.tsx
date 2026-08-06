@@ -161,6 +161,14 @@ function RoomPage() {
       )
       .on(
         "postgres_changes",
+        { event: "DELETE", schema: "public", table: "rooms", filter: `id=eq.${roomId}` },
+        () => {
+          toast.error("This watch room was deleted by the host");
+          navigate({ to: "/rooms", replace: true });
+        },
+      )
+      .on(
+        "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${roomId}` },
         (payload) => setMessages((prev) => [...prev, payload.new as Message]),
       )
