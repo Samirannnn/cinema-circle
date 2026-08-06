@@ -14,7 +14,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useSession } from "@/hooks/use-session";
-import { inviteFriendToRoom, listFriendProfiles, listRoomInviteeIds } from "@/lib/friends";
+import {
+  clearInviteMessages,
+  inviteFriendToRoom,
+  listFriendProfiles,
+  listRoomInviteStatuses,
+} from "@/lib/friends";
 import { postInviteMessage } from "@/lib/rooms";
 
 /** Invite accepted friends straight into a room, and drop the link into chat. */
@@ -32,7 +37,7 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
 
   const invitedQuery = useQuery({
     queryKey: ["room-invitees", roomId],
-    queryFn: () => listRoomInviteeIds(roomId),
+    queryFn: () => listRoomInviteStatuses(roomId),
     enabled: open,
   });
 
@@ -40,6 +45,8 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
     mutationFn: async (friend: { id: string; display_name: string }) => {
       await inviteFriendToRoom(roomId, user!.id, friend.id);
       if (roomCode) {
+        // Drop stale cards so only the fresh RSVP card stands in chat.
+        await clearInviteMessages(roomId, user!.id, friend.id);
         await postInviteMessage({
           roomId,
           userId: user!.id,
@@ -49,9 +56,12 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
           inviteeName: friend.display_name,
         });
       }
+      return friend;
     },
-    onSuccess: () => {
+    onSuccess: (friend) => {
       queryClient.invalidateQueries({ queryKey: ["room-invitees", roomId] });
+      queryClient.invalidateQueries({ queryKey: ["room-invite", roomId, friend.id] });
+      queryClient.invalidateQueries({ queryKey: ["messages", roomId] });
       toast.success("Invite sent and shared in chat");
     },
     onError: () => toast.error("Couldn't send that invite"),
@@ -64,7 +74,16 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
     return clean ? all.filter((f) => f.display_name.toLowerCase().includes(clean)) : all;
   }, [friendsQuery.data, term]);
 
-  const invited = new Set(invitedQuery.data ?? []);
+  const statusById = new Map((invitedQuery.data ?? []).map((r) => [r.invitee_id, r.status]));
+
+  function inviteLabel(id: string) {
+    const status = statusById.get(id);
+    if (status === "accepted") return "Joined";
+    if (status === "declined") return "Re-invite";
+    if (status === "pending") return "Invite again";
+    return "Invite";
+  }
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -105,13 +124,14 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
                 <span className="truncate text-sm">{friend.display_name}</span>
                 <Button
                   size="sm"
-                  variant={invited.has(friend.id) ? "secondary" : "default"}
+                  variant={statusById.has(friend.id) ? "secondary" : "default"}
                   className="ml-auto"
                   disabled={invite.isPending}
                   onClick={() => invite.mutate(friend)}
                 >
-                  {invited.has(friend.id) ? "Invite again" : "Invite"}
+                  {inviteLabel(friend.id)}
                 </Button>
+
               </li>
             ))}
           </ul>
