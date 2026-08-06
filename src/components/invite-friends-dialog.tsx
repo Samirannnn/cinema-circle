@@ -124,13 +124,14 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
                 <span className="truncate text-sm">{friend.display_name}</span>
                 <Button
                   size="sm"
-                  variant={invited.has(friend.id) ? "secondary" : "default"}
+                  variant={statusById.has(friend.id) ? "secondary" : "default"}
                   className="ml-auto"
                   disabled={invite.isPending}
                   onClick={() => invite.mutate(friend)}
                 >
-                  {invited.has(friend.id) ? "Invite again" : "Invite"}
+                  {inviteLabel(friend.id)}
                 </Button>
+
               </li>
             ))}
           </ul>
