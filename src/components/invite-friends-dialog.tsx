@@ -37,7 +37,7 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
 
   const invitedQuery = useQuery({
     queryKey: ["room-invitees", roomId],
-    queryFn: () => listRoomInviteeIds(roomId),
+    queryFn: () => listRoomInviteStatuses(roomId),
     enabled: open,
   });
 
@@ -45,6 +45,8 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
     mutationFn: async (friend: { id: string; display_name: string }) => {
       await inviteFriendToRoom(roomId, user!.id, friend.id);
       if (roomCode) {
+        // Drop stale cards so only the fresh RSVP card stands in chat.
+        await clearInviteMessages(roomId, user!.id, friend.id);
         await postInviteMessage({
           roomId,
           userId: user!.id,
@@ -54,9 +56,12 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
           inviteeName: friend.display_name,
         });
       }
+      return friend;
     },
-    onSuccess: () => {
+    onSuccess: (friend) => {
       queryClient.invalidateQueries({ queryKey: ["room-invitees", roomId] });
+      queryClient.invalidateQueries({ queryKey: ["room-invite", roomId, friend.id] });
+      queryClient.invalidateQueries({ queryKey: ["messages", roomId] });
       toast.success("Invite sent and shared in chat");
     },
     onError: () => toast.error("Couldn't send that invite"),
@@ -69,7 +74,16 @@ export function InviteFriendsDialog({ roomId, roomCode }: { roomId: string; room
     return clean ? all.filter((f) => f.display_name.toLowerCase().includes(clean)) : all;
   }, [friendsQuery.data, term]);
 
-  const invited = new Set(invitedQuery.data ?? []);
+  const statusById = new Map((invitedQuery.data ?? []).map((r) => [r.invitee_id, r.status]));
+
+  function inviteLabel(id: string) {
+    const status = statusById.get(id);
+    if (status === "accepted") return "Joined";
+    if (status === "declined") return "Re-invite";
+    if (status === "pending") return "Invite again";
+    return "Invite";
+  }
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
