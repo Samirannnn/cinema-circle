@@ -165,7 +165,7 @@ export function RoomSettingsDialog({ room, isHost, memberIds, nameFor, onRoomUpd
                     <div className="flex gap-1.5">
                       <Button
                         variant="ghost"
-                        size="xs"
+                        size="sm"
                         className="text-xs text-primary"
                         onClick={() => void transferHost(id)}
                       >
@@ -173,7 +173,7 @@ export function RoomSettingsDialog({ room, isHost, memberIds, nameFor, onRoomUpd
                       </Button>
                       <Button
                         variant="ghost"
-                        size="xs"
+                        size="sm"
                         className="text-xs text-destructive"
                         onClick={() => void kickUser(id)}
                       >

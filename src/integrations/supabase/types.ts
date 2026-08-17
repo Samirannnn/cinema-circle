@@ -76,6 +76,201 @@ export type Database = {
           },
         ]
       }
+      blocked_users: {
+        Row: {
+          id: string
+          blocker_id: string
+          blocked_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          blocker_id: string
+          blocked_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          blocker_id?: string
+          blocked_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          sender_id: string | null
+          reference_id: string | null
+          message: string
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          sender_id?: string | null
+          reference_id?: string | null
+          message: string
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          sender_id?: string | null
+          reference_id?: string | null
+          message?: string
+          is_read?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          id: string
+          user_id: string
+          movie_title: string
+          movie_url: string | null
+          poster_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          movie_title: string
+          movie_url?: string | null
+          poster_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          movie_title?: string
+          movie_url?: string | null
+          poster_url?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      room_bans: {
+        Row: {
+          id: string
+          room_id: string
+          user_id: string
+          banned_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          room_id: string
+          user_id: string
+          banned_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          room_id?: string
+          user_id?: string
+          banned_by?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_bans_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_reports: {
+        Row: {
+          id: string
+          reporter_id: string
+          reported_user_id: string
+          room_id: string | null
+          reason: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          reporter_id: string
+          reported_user_id: string
+          room_id?: string | null
+          reason: string
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          reporter_id?: string
+          reported_user_id?: string
+          room_id?: string | null
+          reason?: string
+          status?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reports_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      watch_history: {
+        Row: {
+          id: string
+          user_id: string
+          room_id: string | null
+          movie_title: string
+          movie_url: string | null
+          poster_url: string | null
+          position_seconds: number
+          duration_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          room_id?: string | null
+          movie_title: string
+          movie_url?: string | null
+          poster_url?: string | null
+          position_seconds?: number
+          duration_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          room_id?: string | null
+          movie_title?: string
+          movie_url?: string | null
+          poster_url?: string | null
+          position_seconds?: number
+          duration_seconds?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watch_history_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -83,6 +278,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          role: string
           updated_at: string
         }
         Insert: {
@@ -91,6 +287,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id: string
+          role?: string
           updated_at?: string
         }
         Update: {
@@ -99,6 +296,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          role?: string
           updated_at?: string
         }
         Relationships: []
@@ -176,17 +374,20 @@ export type Database = {
       rooms: {
         Row: {
           code: string
+          co_host_ids: string[]
           created_at: string
           description: string | null
           host_id: string
           id: string
           is_active: boolean
+          is_locked: boolean
           is_playing: boolean
           is_private: boolean
           last_sync_at: string
           movie_title: string | null
           movie_url: string | null
           name: string
+          password_hash: string | null
           playback_rate: number
           position_seconds: number
           poster_url: string | null
@@ -194,17 +395,20 @@ export type Database = {
         }
         Insert: {
           code: string
+          co_host_ids?: string[]
           created_at?: string
           description?: string | null
           host_id: string
           id?: string
           is_active?: boolean
+          is_locked?: boolean
           is_playing?: boolean
           is_private?: boolean
           last_sync_at?: string
           movie_title?: string | null
           movie_url?: string | null
           name: string
+          password_hash?: string | null
           playback_rate?: number
           position_seconds?: number
           poster_url?: string | null
@@ -212,17 +416,20 @@ export type Database = {
         }
         Update: {
           code?: string
+          co_host_ids?: string[]
           created_at?: string
           description?: string | null
           host_id?: string
           id?: string
           is_active?: boolean
+          is_locked?: boolean
           is_playing?: boolean
           is_private?: boolean
           last_sync_at?: string
           movie_title?: string | null
           movie_url?: string | null
           name?: string
+          password_hash?: string | null
           playback_rate?: number
           position_seconds?: number
           poster_url?: string | null

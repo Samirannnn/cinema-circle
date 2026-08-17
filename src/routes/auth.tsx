@@ -105,15 +105,25 @@ function AuthPage() {
 
   async function handleGoogle() {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/rooms`,
+      },
     });
-    if (result.error) {
-      setLoading(false);
-      return toast.error("Google sign-in failed. Please try again.");
+
+    if (error) {
+      console.warn("Supabase native Google OAuth error, trying Lovable Auth:", error);
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        setLoading(false);
+        return toast.error("Google sign-in failed. Please ensure Google Provider is enabled in your Supabase Auth dashboard.");
+      }
+      if (result.redirected) return;
+      navigate({ to: "/rooms" });
     }
-    if (result.redirected) return;
-    navigate({ to: "/rooms" });
   }
 
   if (checking) {

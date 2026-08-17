@@ -29,6 +29,7 @@ export function ReportUserDialog({ reportedUserId, reportedUserName, roomId, cur
 
   async function handleReport() {
     if (!reason.trim()) return toast.error("Please provide a reason for the report.");
+    if (!currentUserId) return;
     setSubmitting(true);
 
     const { error } = await supabase.from("user_reports").insert({
@@ -47,6 +48,7 @@ export function ReportUserDialog({ reportedUserId, reportedUserName, roomId, cur
   }
 
   async function handleBlock() {
+    if (!currentUserId) return;
     const { error } = await supabase.from("blocked_users").insert({
       blocker_id: currentUserId,
       blocked_id: reportedUserId,
@@ -60,7 +62,7 @@ export function ReportUserDialog({ reportedUserId, reportedUserName, roomId, cur
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="xs" className="text-muted-foreground hover:text-destructive">
+        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
           <Flag className="size-3.5" />
         </Button>
       </DialogTrigger>

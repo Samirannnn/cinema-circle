@@ -43,7 +43,7 @@ export function WatchHistorySection() {
             <div key={item.id} className="surface-panel overflow-hidden rounded-xl border border-border/60 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-base line-clamp-1">{item.movie_title}</h3>
-                <Button size="xs" variant="secondary" className="gap-1">
+                <Button size="sm" variant="secondary" className="gap-1">
                   <Play className="size-3" /> Resume
                 </Button>
               </div>

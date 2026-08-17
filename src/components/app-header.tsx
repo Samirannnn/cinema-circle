@@ -17,6 +17,18 @@ import { useSession } from "@/hooks/use-session";
 import { useProfile } from "@/lib/profile";
 import { useNotifications } from "@/hooks/use-notifications";
 
+function formatTimeAgo(dateStr: string): string {
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
 export function AppHeader() {
   const { user } = useSession();
   const { data: profile } = useProfile(user?.id);
@@ -59,7 +71,7 @@ export function AppHeader() {
               )}
 
               {/* Notification Bell Dropdown */}
-              <DropdownMenu onOpenChange={(open) => open && markAllRead()}>
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative">
                     <Bell className="size-5" />
@@ -76,27 +88,56 @@ export function AppHeader() {
                 <DropdownMenuContent align="end" className="w-80">
                   <DropdownMenuLabel className="flex items-center justify-between">
                     <span>Notifications</span>
-                    {unreadCount > 0 && <span className="text-xs text-muted-foreground">{unreadCount} new</span>}
+                    {unreadCount > 0 && (
+                      <button
+                        className="text-xs text-primary hover:underline"
+                        onClick={() => void markAllRead()}
+                      >
+                        Mark all as read
+                      </button>
+                    )}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {notifications.length > 0 ? (
-                    <div className="max-h-64 overflow-y-auto space-y-1 p-1">
-                      {notifications.map((n) => (
+                    <div className="max-h-72 overflow-y-auto space-y-0.5 p-1">
+                      {notifications.slice(0, 20).map((n) => (
                         <div
                           key={n.id}
-                          className="rounded-md p-2 text-xs hover:bg-accent transition-colors"
+                          className={`flex items-start gap-2.5 rounded-md p-2 text-xs cursor-pointer transition-colors hover:bg-accent ${
+                            !n.isRead ? "bg-primary/5" : ""
+                          }`}
                           onClick={() => {
-                            if (n.type === "friend_request") navigate({ to: "/friends" });
-                            if (n.type === "room_invite") navigate({ to: "/rooms" });
+                            if (n.type === "friend_request" || n.type === "friend_request_accepted")
+                              navigate({ to: "/friends" });
+                            if (n.type === "room_invitation") navigate({ to: "/rooms" });
                           }}
                         >
-                          <div className="font-semibold text-foreground">{n.title}</div>
-                          <div className="text-muted-foreground">{n.message}</div>
+                          {n.senderAvatar ? (
+                            <Avatar className="size-7 shrink-0 border border-border">
+                              <AvatarImage src={n.senderAvatar} alt="" />
+                              <AvatarFallback className="text-[9px]">
+                                {(n.senderName ?? "?").slice(0, 1).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          ) : (
+                            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[9px]">
+                              {n.type === "friend_request" ? "👤" : n.type === "room_invitation" ? "🎬" : "🔔"}
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-foreground leading-snug">{n.message}</div>
+                            <div className="mt-0.5 text-muted-foreground">
+                              {formatTimeAgo(n.createdAt)}
+                            </div>
+                          </div>
+                          {!n.isRead && (
+                            <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />
+                          )}
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="p-4 text-center text-xs text-muted-foreground">No new notifications</div>
+                    <div className="p-4 text-center text-xs text-muted-foreground">No notifications yet</div>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>

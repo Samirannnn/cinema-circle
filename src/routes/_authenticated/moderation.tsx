@@ -40,10 +40,10 @@ function ModerationPage() {
     enabled: isStaff,
   });
 
-  async function resolveReport(reportId: string, status: "resolved" | "dismissed") {
+  async function resolveReport(reportId: string, status: string) {
     const { error } = await supabase
       .from("user_reports")
-      .update({ status })
+      .update({ status } as any)
       .eq("id", reportId);
 
     if (error) return toast.error("Failed to update report status.");
@@ -102,10 +102,10 @@ function ModerationPage() {
 
                 {report.status === "pending" && (
                   <div className="flex items-center gap-2">
-                    <Button size="xs" variant="default" onClick={() => void resolveReport(report.id, "resolved")}>
+                    <Button size="sm" variant="default" onClick={() => void resolveReport(report.id, "resolved")}>
                       <Check className="mr-1 size-3.5" /> Resolve
                     </Button>
-                    <Button size="xs" variant="outline" onClick={() => void resolveReport(report.id, "dismissed")}>
+                    <Button size="sm" variant="outline" onClick={() => void resolveReport(report.id, "dismissed")}>
                       <Trash2 className="mr-1 size-3.5" /> Dismiss
                     </Button>
                   </div>
